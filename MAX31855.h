@@ -17,28 +17,23 @@
 #ifndef ADAFRUIT_MAX31855_H
 #define ADAFRUIT_MAX31855_H
 
-#if (ARDUINO >= 100)
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
+#include <Arduino.h>
+#include <SPIDevice.h>
+#include <SPI.h>
 
-class Adafruit_MAX31855 {
- public:
-  Adafruit_MAX31855(int8_t _sclk, int8_t _cs, int8_t _miso);
-  Adafruit_MAX31855(int8_t _cs);
+class MAX31855 : SPIDevice {
+    public:
+        MAX31855(SPIClass& spi, const uint8_t cs) 
+            : SPIDevice(spi, cs) {}
 
-  void begin(void);
-  double readInternal(void);
-  double readCelsius(void);
-  double readFarenheit(void);
-  uint8_t readError();
+        void begin() {};
+        double readInternal();
+        double readCelsius();
+        double readFarenheit();
+        uint8_t readError();
 
- private:
-  boolean initialized;
-
-  int8_t sclk, miso, cs;
-  uint32_t spiread32(void);
+    private:
+        uint32_t read32(void);
 };
 
 #endif

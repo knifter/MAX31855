@@ -14,52 +14,18 @@
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
-#include "Adafruit_MAX31855.h"
-#ifdef __AVR
-  #include <avr/pgmspace.h>
-#elif defined(ESP8266)
-  #include <pgmspace.h>
-#endif
+#include "MAX31855.h"
+// #ifdef __AVR
+//   #include <avr/pgmspace.h>
+// #elif defined(ESP8266)
+//   #include <pgmspace.h>
+// #endif
 
 #include <stdlib.h>
-#include <SPI.h>
 
-
-Adafruit_MAX31855::Adafruit_MAX31855(int8_t _sclk, int8_t _cs, int8_t _miso) {
-  sclk = _sclk;
-  cs = _cs;
-  miso = _miso;
-
-  initialized = false;
-}
-
-Adafruit_MAX31855::Adafruit_MAX31855(int8_t _cs) {
-  cs = _cs;
-  sclk = miso = -1;
-
-  initialized = false;
-}
-
-void Adafruit_MAX31855::begin(void) {
-  //define pin modes
-  pinMode(cs, OUTPUT);
-  digitalWrite(cs, HIGH);
-
-  if (sclk == -1) {
-    // hardware SPI
-    //start and configure hardware SPI
-    SPI.begin();
-  } else {
-    pinMode(sclk, OUTPUT); 
-    pinMode(miso, INPUT);
-  }
-  initialized = true;
-}
-
-double Adafruit_MAX31855::readInternal(void) {
-  uint32_t v;
-
-  v = spiread32();
+double MAX31855::readInternal(void) 
+{
+  uint32_t v = read32();
 
   // ignore bottom 4 bits - they're just thermocouple data
   v >>= 4;
@@ -77,11 +43,10 @@ double Adafruit_MAX31855::readInternal(void) {
   return internal;
 }
 
-double Adafruit_MAX31855::readCelsius(void) {
+double MAX31855::readCelsius(void) 
+{
 
-  int32_t v;
-
-  v = spiread32();
+  int32_t v = read32();
 
   //Serial.print("0x"); Serial.println(v, HEX);
 
@@ -115,11 +80,13 @@ double Adafruit_MAX31855::readCelsius(void) {
   return centigrade;
 }
 
-uint8_t Adafruit_MAX31855::readError() {
-  return spiread32() & 0x7;
+uint8_t MAX31855::readError() 
+{
+  return read32() & 0x07;
 }
 
-double Adafruit_MAX31855::readFarenheit(void) {
+double MAX31855::readFarenheit(void) 
+{
   float f = readCelsius();
   f *= 9.0;
   f /= 5.0;
@@ -127,52 +94,23 @@ double Adafruit_MAX31855::readFarenheit(void) {
   return f;
 }
 
-uint32_t Adafruit_MAX31855::spiread32(void) { 
-  int i;
-  uint32_t d = 0;
+uint32_t MAX31855::read32(void) 
+{ 
+    uint32_t d = 0;
 
-  // backcompatibility!
-  if (! initialized) {
-    begin();
-  }
-
-  digitalWrite(cs, LOW);
-  delay(1);
-
-  if(sclk == -1) {
-    // hardware SPI
-
-    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
-
-    d = SPI.transfer(0);
+    // Do beginTransaction after setting CS low to introduce a little delay after CS
+    digitalWrite(_cs, LOW);
+    _spi.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    d = _spi.transfer(0);
     d <<= 8;
-    d |= SPI.transfer(0);
+    d |= _spi.transfer(0);
     d <<= 8;
-    d |= SPI.transfer(0);
+    d |= _spi.transfer(0);
     d <<= 8;
-    d |= SPI.transfer(0);
+    d |= _spi.transfer(0);
+    digitalWrite(_cs, HIGH);
+    _spi.endTransaction();
 
-    SPI.endTransaction();
-  } else {
-    // software SPI
-
-    digitalWrite(sclk, LOW);
-    delay(1);
-
-    for (i=31; i>=0; i--) {
-      digitalWrite(sclk, LOW);
-      delay(1);
-      d <<= 1;
-      if (digitalRead(miso)) {
-	d |= 1;
-      }
-      
-      digitalWrite(sclk, HIGH);
-      delay(1);
-    }
-  }
-
-  digitalWrite(cs, HIGH);
-  //Serial.println(d, HEX);
-  return d;
+    //Serial.println(d, HEX);
+    return d;
 }
