@@ -93,24 +93,3 @@ double MAX31855::readFarenheit(void)
   f += 32;
   return f;
 }
-
-uint32_t MAX31855::read32(void) 
-{ 
-    uint32_t d = 0;
-
-    // Do beginTransaction after setting CS low to introduce a little delay after CS
-    digitalWrite(_cs, LOW);
-    _spi.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
-    d = _spi.transfer(0);
-    d <<= 8;
-    d |= _spi.transfer(0);
-    d <<= 8;
-    d |= _spi.transfer(0);
-    d <<= 8;
-    d |= _spi.transfer(0);
-    digitalWrite(_cs, HIGH);
-    _spi.endTransaction();
-
-    //Serial.println(d, HEX);
-    return d;
-}
