@@ -24,16 +24,13 @@
 class MAX31855 : SPIDevice {
     public:
         MAX31855(SPIClass& spi, const uint8_t cs) 
-            : SPIDevice(spi, cs) {}
+            : SPIDevice(spi, cs, SPISettings(4000000, MSBFIRST, SPI_MODE0)) {}
 
         void begin() {};
         double readInternal();
         double readCelsius();
         double readFarenheit();
         uint8_t readError();
-
-    private:
-        uint32_t read32(void);
 };
 
 #endif
